@@ -11,7 +11,7 @@ local Board = {}
 
 local WIDTH, HEIGHT = Levels.width, Levels.height
 local CELL = UDim2.fromScale(1 / WIDTH, 1 / HEIGHT)
-local HOME = UDim2.fromScale(0.02, 0.14)
+local HOME = UDim2.fromScale(0.02, 0.12)
 local SLIDE_SECONDS = 0.12
 local LASER_SPRITES = { [0] = "laserOn", [1] = "laserOff", [2] = "laserWarn" }
 
@@ -26,6 +26,7 @@ local REACTIONS = {
 	haze = { text = "SMOKE!", color = "ink", flash = "ink" },
 	empty = { text = "NO SMOKE", color = "dim", shake = true },
 	hurt = { color = "rose", flash = "rose", shake = true }, -- its text is the cause
+	clear = { color = "teal", flash = "teal" }, -- its text is the vault's bonus
 }
 
 local board, tileLayer, pieceLayer, popupLayer, flashFrame
@@ -61,7 +62,7 @@ function Board.render(state) -- tiles once per level; pieces slide; each event f
 end
 
 function Board.mount(parent)
-	board = Draw.frame(parent, Draw.colors.pit, HOME, UDim2.fromScale(0.7, 0.83), 0.02)
+	board = Draw.frame(parent, Draw.colors.pit, HOME, UDim2.fromScale(0.7, 0.61), 0.02)
 	Draw.make("UIAspectRatioConstraint", board, { AspectRatio = WIDTH / HEIGHT })
 	tileLayer = Draw.layer(board, 1)
 	pieceLayer = Draw.layer(board, 2)

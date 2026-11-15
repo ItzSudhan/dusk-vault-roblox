@@ -17,6 +17,8 @@ local Screens = require(Ui.Screens)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
+local STAGE_ASPECT = 5 / 4
+
 local KEYS = {
 	[Enum.KeyCode.W] = "up",
 	[Enum.KeyCode.Up] = "up",
@@ -48,9 +50,20 @@ local gui = Draw.make("ScreenGui", Players.LocalPlayer:WaitForChild("PlayerGui")
 	ResetOnSpawn = false,
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 })
-local root = Draw.frame(gui, Draw.colors.night, UDim2.fromScale(0, 0), UDim2.fromScale(1, 1))
-Board.mount(root)
-Screens.mount(root, sendIntent)
+Draw.frame(gui, Draw.colors.night, UDim2.fromScale(0, 0), UDim2.fromScale(1, 1))
+
+-- The game is drawn on a stage of one fixed shape, centred in whatever shape the window has.
+local stage = Draw.make("Frame", gui, {
+	Name = "Stage",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Draw.colors.night,
+	ClipsDescendants = true,
+})
+Draw.make("UIAspectRatioConstraint", stage, { AspectRatio = STAGE_ASPECT })
+Board.mount(stage)
+Screens.mount(stage, sendIntent)
 
 Remotes.Snapshot.OnClientEvent:Connect(drawState)
 UserInputService.InputBegan:Connect(function(input)

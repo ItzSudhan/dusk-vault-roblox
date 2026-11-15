@@ -7,7 +7,7 @@
 // Outside the grader, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-roblox.ts';
@@ -24,8 +24,15 @@ const CAPS = {
   scripts_max_path_chars: 1048576,
 };
 
+// Everything the entry hands in. Each must exist: a missing one is named, not skipped.
+const HAND_IN = ['game.rbxl', 'PLAY.json', 'src', 'screenshots'];
+
 mkdirSync(output, { recursive: true });
-for (const name of ['game.rbxl', 'PLAY.json', 'src', 'screenshots']) {
-  cpSync(join(repo, name), join(output, name), { recursive: true });
+for (const name of HAND_IN) {
+  const source = join(repo, name);
+  if (!existsSync(source)) {
+    throw new Error(`main.ts: ${name} is missing beside main.ts; build the place with rojo and add the screenshots first`);
+  }
+  cpSync(source, join(output, name), { recursive: true });
 }
 writeFileSync(join(output, 'dossier.json'), buildDossier(output, CAPS));

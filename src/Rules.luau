@@ -114,8 +114,10 @@ function Rules.loseLife(state, cause)
 end
 
 function Rules.clearLevel(state)
-	state.score += Rules.POINTS.clear + state.movesLeft * Rules.POINTS.moveLeft
+	local bonus = Rules.POINTS.clear + state.movesLeft * Rules.POINTS.moveLeft
+	state.score += bonus
 	state.cleared = state.level
+	Rules.emit(state, "clear", state.player.x, state.player.y, "+" .. bonus)
 	if state.level == Levels.count then
 		state.score += state.lives * Rules.POINTS.lifeLeft
 		Rules.endRun(state, "won")

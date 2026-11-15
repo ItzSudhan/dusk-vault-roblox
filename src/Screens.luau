@@ -12,7 +12,7 @@ local Screens = {}
 
 local SHOWN, ABOVE = UDim2.fromScale(0, 0), UDim2.fromScale(0, -1)
 local BANNER_Y = 0.38
-local ROW_GAP = 0.098
+local STAT_GAP = 0.162
 local ICONS_PER_ROW = 3
 local CAST = { "player", "key", "gem", "smoke", "guard", "hound", "wraith" }
 local ENDINGS = {
@@ -63,14 +63,22 @@ local STATS = {
 	},
 }
 
--- text, intent, colour name, x, y, width (fractions of the HUD panel)
+-- The on-screen buttons under the board: text, intent, colour name, x, y, width, height
+-- (fractions of the stage).
 local BUTTONS = {
-	{ "W", "up", "wallTop", 0.37, 0.635, 0.26 },
-	{ "A", "left", "wallTop", 0.07, 0.745, 0.26 },
-	{ "S", "down", "wallTop", 0.37, 0.745, 0.26 },
-	{ "D", "right", "wallTop", 0.67, 0.745, 0.26 },
-	{ "WAIT", "wait", "dim", 0.07, 0.865, 0.41 },
-	{ "SMOKE", "smoke", "amber", 0.52, 0.865, 0.41 },
+	{ "W", "up", "wallTop", 0.115, 0.815, 0.085, 0.07 },
+	{ "A", "left", "wallTop", 0.02, 0.895, 0.085, 0.07 },
+	{ "S", "down", "wallTop", 0.115, 0.895, 0.085, 0.07 },
+	{ "D", "right", "wallTop", 0.21, 0.895, 0.085, 0.07 },
+	{ "WAIT", "wait", "dim", 0.33, 0.815, 0.185, 0.15 },
+	{ "SMOKE", "smoke", "amber", 0.535, 0.815, 0.185, 0.15 },
+}
+
+-- The title screen's three steps: a sprite and what to do about it.
+local STEPS = {
+	{ "key", "GRAB THE KEYS" },
+	{ "guard", "DODGE THE GUARDS" },
+	{ "doorOpen", "REACH THE DOOR" },
 }
 
 local titleScreen, endScreen, banner
@@ -101,6 +109,9 @@ end
 
 function Screens.showStats(state)
 	texts.vaultName.Text = "VAULT " .. state.level .. ": " .. Levels.load(state.level).name
+	local goal, colorName = Screens.goalLine(state)
+	texts.goal.Text = goal
+	texts.goal.TextColor3 = Draw.colors[colorName]
 	for _, stat in STATS do
 		local showing = if stat.text then stat.text(state) else table.concat({ stat.count(state) }, "/")
 		if drawn[stat.name] ~= showing then
@@ -115,6 +126,17 @@ function Screens.showStats(state)
 			end
 		end
 	end
+end
+
+-- The line under the board: what to do next, and its colour.
+function Screens.goalLine(state)
+	local keysLeft = state.keysNeeded - state.keys
+	if state.frozen > 0 then
+		return "ENEMIES BLINDED FOR " .. state.frozen .. " TURNS", "ink"
+	elseif keysLeft > 0 then
+		return "FIND " .. keysLeft .. (if keysLeft == 1 then " KEY" else " KEYS") .. ", THEN REACH THE DOOR", "gold"
+	end
+	return "THE DOOR IS OPEN. GET OUT!", "teal"
 end
 
 function Screens.drawIcons(row, kind, filled, total)
@@ -167,17 +189,24 @@ function Screens.mount(parent, sendIntent)
 
 	titleScreen = Draw.frame(parent, colors.night, SHOWN, UDim2.fromScale(1, 1))
 	titleScreen.ZIndex = 10
-	Draw.label(titleScreen, "DUSK VAULT", colors.amber, UDim2.fromScale(0.1, 0.05), UDim2.fromScale(0.8, 0.27), Draw.titleFont)
+	titleScreen.Active = true -- a screen over the board takes the clicks meant for it
+	Draw.label(titleScreen, "DUSK VAULT", colors.amber, UDim2.fromScale(0.08, 0.03), UDim2.fromScale(0.84, 0.2), Draw.titleFont)
 	for index, kind in CAST do
-		Draw.icon(kind, titleScreen, UDim2.fromScale(0.5 + (index - 4) * 0.09 - 0.04, 0.33), UDim2.fromScale(0.08, 0.15))
+		Draw.icon(kind, titleScreen, UDim2.fromScale(0.5 + (index - 4) * 0.1 - 0.045, 0.235), UDim2.fromScale(0.09, 0.1))
 	end
-	Draw.label(titleScreen, "GRAB THE KEYS. DODGE THE GUARDS. REACH THE DOOR.", colors.ink, UDim2.fromScale(0.04, 0.51), UDim2.fromScale(0.92, 0.075))
-	Draw.label(titleScreen, "WASD OR ARROWS: MOVE     SPACE: WAIT     F: SMOKE BOMB", colors.dim, UDim2.fromScale(0.1, 0.6), UDim2.fromScale(0.8, 0.05))
-	Draw.button(titleScreen, "START HEIST", colors.amber, UDim2.fromScale(0.3, 0.69), UDim2.fromScale(0.4, 0.16), start)
-	texts.titleBest = Draw.label(titleScreen, "BEST 0", colors.teal, UDim2.fromScale(0.3, 0.88), UDim2.fromScale(0.4, 0.07), Draw.titleFont)
+	for index, step in STEPS do
+		local y = 0.36 + (index - 1) * 0.095
+		Draw.icon(step[1], titleScreen, UDim2.fromScale(0.17, y), UDim2.fromScale(0.1, 0.085))
+		local line = Draw.label(titleScreen, step[2], colors.ink, UDim2.fromScale(0.29, y + 0.01), UDim2.fromScale(0.62, 0.065))
+		line.TextXAlignment = Enum.TextXAlignment.Left
+	end
+	Draw.label(titleScreen, "WASD OR ARROWS: MOVE   SPACE: WAIT   F: SMOKE BOMB", colors.dim, UDim2.fromScale(0.06, 0.655), UDim2.fromScale(0.88, 0.04))
+	Draw.button(titleScreen, "START HEIST", colors.amber, UDim2.fromScale(0.25, 0.72), UDim2.fromScale(0.5, 0.16), start)
+	texts.titleBest = Draw.label(titleScreen, "BEST 0", colors.teal, UDim2.fromScale(0.3, 0.9), UDim2.fromScale(0.4, 0.065), Draw.titleFont)
 
 	endScreen = Draw.frame(parent, colors.night, ABOVE, UDim2.fromScale(1, 1))
 	endScreen.ZIndex = 10
+	endScreen.Active = true
 	texts.headline = Draw.label(endScreen, "", colors.teal, UDim2.fromScale(0.08, 0.05), UDim2.fromScale(0.84, 0.25), Draw.titleFont)
 	texts.reason = Draw.label(endScreen, "", colors.ink, UDim2.fromScale(0.1, 0.31), UDim2.fromScale(0.8, 0.075))
 	for index, name in { "SCORE", "BEST", "VAULTS" } do
@@ -191,32 +220,35 @@ end
 
 function Screens.mountHud(parent, sendIntent)
 	local colors = Draw.colors
-	local title = Draw.label(parent, "DUSK VAULT", colors.amber, UDim2.fromScale(0.15, 0.02), UDim2.fromScale(0.3, 0.1), Draw.titleFont)
+	local title = Draw.label(parent, "DUSK VAULT", colors.amber, UDim2.fromScale(0.17, 0.02), UDim2.fromScale(0.33, 0.085), Draw.titleFont)
 	title.TextXAlignment = Enum.TextXAlignment.Left
-	texts.vaultName = Draw.label(parent, "", colors.ink, UDim2.fromScale(0.46, 0.04), UDim2.fromScale(0.52, 0.065))
+	texts.vaultName = Draw.label(parent, "", colors.ink, UDim2.fromScale(0.52, 0.04), UDim2.fromScale(0.46, 0.05))
 	texts.vaultName.TextXAlignment = Enum.TextXAlignment.Right
+	texts.goal = Draw.label(parent, "", colors.gold, UDim2.fromScale(0.02, 0.745), UDim2.fromScale(0.7, 0.05))
+	texts.goal.TextXAlignment = Enum.TextXAlignment.Left
 
-	local panel = Draw.frame(parent, colors.panel, UDim2.fromScale(0.74, 0.14), UDim2.fromScale(0.24, 0.83), 0.06)
+	-- The side panel: each stat is its name over its value.
+	local panel = Draw.frame(parent, colors.panel, UDim2.fromScale(0.74, 0.12), UDim2.fromScale(0.24, 0.845), 0.08)
 	for index, stat in STATS do
-		local y = 0.03 + (index - 1) * ROW_GAP
-		local name = Draw.label(panel, stat.name, colors.dim, UDim2.fromScale(0.07, y + 0.022), UDim2.fromScale(0.36, 0.045))
+		local y = 0.025 + (index - 1) * STAT_GAP
+		local name = Draw.label(panel, stat.name, colors.dim, UDim2.fromScale(0.1, y), UDim2.fromScale(0.8, 0.04))
 		name.TextXAlignment = Enum.TextXAlignment.Left
 		if stat.text then
-			local value = Draw.label(panel, "", colors.ink, UDim2.fromScale(0.42, y), UDim2.fromScale(0.51, 0.085), Draw.titleFont)
-			value.TextXAlignment = Enum.TextXAlignment.Right
+			local value = Draw.label(panel, "", colors.ink, UDim2.fromScale(0.1, y + 0.045), UDim2.fromScale(0.8, 0.095), Draw.titleFont)
+			value.TextXAlignment = Enum.TextXAlignment.Left
 			stats[stat.name] = value
 		else
 			stats[stat.name] = Draw.make("Frame", panel, {
 				BackgroundTransparency = 1,
-				Position = UDim2.fromScale(0.45, y + 0.005),
-				Size = UDim2.fromScale(0.5, 0.078),
+				Position = UDim2.fromScale(0.08, y + 0.05),
+				Size = UDim2.fromScale(0.84, 0.09),
 			})
 		end
 	end
 
 	for _, button in BUTTONS do
-		local text, intent, colorName, x, y, width = table.unpack(button)
-		Draw.button(panel, text, colors[colorName], UDim2.fromScale(x, y), UDim2.fromScale(width, 0.095), function()
+		local text, intent, colorName, x, y, width, height = table.unpack(button)
+		Draw.button(parent, text, colors[colorName], UDim2.fromScale(x, y), UDim2.fromScale(width, height), function()
 			sendIntent(intent)
 		end)
 	end
