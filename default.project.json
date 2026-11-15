@@ -1,0 +1,68 @@
+{
+  "name": "dusk-vault",
+  "tree": {
+    "$className": "DataModel",
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+    "ReplicatedStorage": {
+      "Enemies": {
+        "$path": "src/Enemies.luau"
+      },
+      "Levels": {
+        "$path": "src/Levels.luau"
+      },
+      "Rules": {
+        "$path": "src/Rules.luau"
+      },
+      "Ui": {
+        "$className": "Folder",
+        "Board": {
+          "$path": "src/Board.luau"
+        },
+        "Draw": {
+          "$path": "src/Draw.luau"
+        },
+        "Screens": {
+          "$path": "src/Screens.luau"
+        }
+      },
+      "Remotes": {
+        "$className": "Folder",
+        "Intent": {
+          "$className": "RemoteEvent"
+        },
+        "Snapshot": {
+          "$className": "RemoteEvent"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "BestScore": {
+        "$path": "src/BestScore.luau"
+      },
+      "Sessions": {
+        "$path": "src/Sessions.server.luau"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/Client.client.luau"
+        }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "FilteringEnabled": true
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
