@@ -1,53 +1,49 @@
--- Board: draws the vault from the server's state. Tiles are drawn once per level; pieces slide to
--- where the state puts them; each event of the turn gets a popup, a flash or a shake.
+-- Board: draws the vault from the server's state and nothing else. Tiles come from the rows the
+-- server sends, once per vault; pieces slide to where the state puts them; each event of the turn
+-- gets a popup, a flash or a shake.
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Levels = require(ReplicatedStorage.Levels)
-local Rules = require(ReplicatedStorage.Rules)
 local Draw = require(script.Parent.Draw)
 
 local Board = {}
 
-local WIDTH, HEIGHT = Levels.width, Levels.height
+local WIDTH, HEIGHT = 13, 9
 local CELL = UDim2.fromScale(1 / WIDTH, 1 / HEIGHT)
-local HOME = UDim2.fromScale(0.02, 0.12)
+local HOME = UDim2.fromScale(0.015, 0.1)
+local SIZE = UDim2.fromScale(0.596, 0.66)
 local SLIDE_SECONDS = 0.12
-local LASER_SPRITES = { [0] = "laserOn", [1] = "laserOff", [2] = "laserWarn" }
+local TILES = { ["#"] = "wall", T = "pad", L = "laserOff", E = "doorLocked" } -- drawn over the floor
+local LASER_SPRITES = { on = "laserOn", off = "laserOff", warn = "laserWarn", jammed = "laserJammed" }
 
--- What the player sees and feels for each event the rules emit.
+-- What the player sees and feels for each event the rules emit. The words come with the event.
 local REACTIONS = {
 	bump = { shake = true },
-	locked = { text = "LOCKED", color = "rose", shake = true },
-	unlock = { text = "DOOR OPEN", color = "teal", flash = "teal" },
-	gem = { text = "+" .. Rules.POINTS.gem, color = "teal" },
-	key = { text = "+" .. Rules.POINTS.key, color = "gold" },
-	smoke = { text = "+" .. Rules.POINTS.smoke, color = "ink" },
-	haze = { text = "SMOKE!", color = "ink", flash = "ink" },
-	empty = { text = "NO SMOKE", color = "dim", shake = true },
-	hurt = { color = "rose", flash = "rose", shake = true }, -- its text is the cause
-	clear = { color = "teal", flash = "teal" }, -- its text is the vault's bonus
+	locked = { color = "rose", shake = true },
+	unlock = { color = "teal", flash = "teal" },
+	pick = { color = "gold" },
+	warp = { color = "steel", flash = "steel" },
+	use = { color = "ink", flash = "ink" },
+	empty = { color = "dim", shake = true },
+	hurt = { color = "rose", flash = "rose", shake = true },
+	clear = { color = "teal", flash = "teal" },
 }
 
 local board, tileLayer, pieceLayer, popupLayer, flashFrame
 local pieces = {} -- [id] = the cell of a thief, enemy or item now on the board
 local laserCells = {}
 local doorCell
-local shown = { level = 0, laser = 1, open = false } -- what the tiles currently show
+local shown = { vault = "", laser = "off", open = false } -- what the tiles currently show
 
-function Board.render(state) -- tiles once per level; pieces slide; each event flashes or pops
-	local level = Levels.load(state.level)
-	if shown.level ~= state.level then
-		Board.drawTiles(level)
-		shown.level = state.level
+function Board.render(state) -- tiles once per vault; pieces slide; each event flashes or pops
+	if shown.vault ~= state.vault then
+		Board.drawTiles(state.rows)
+		shown.vault = state.vault
 	end
 	Board.placePieces(state)
 
-	local laser = state.turn % Rules.LASER_PERIOD
-	if shown.laser ~= laser then
-		shown.laser = laser
+	if shown.laser ~= state.laser then
+		shown.laser = state.laser
 		for _, cell in laserCells do
-			Board.redraw(cell, LASER_SPRITES[laser])
+			Board.redraw(cell, LASER_SPRITES[state.laser])
 		end
 	end
 	local open = state.keys >= state.keysNeeded
@@ -62,7 +58,7 @@ function Board.render(state) -- tiles once per level; pieces slide; each event f
 end
 
 function Board.mount(parent)
-	board = Draw.frame(parent, Draw.colors.pit, HOME, UDim2.fromScale(0.7, 0.61), 0.02)
+	board = Draw.frame(parent, Draw.colors.pit, HOME, SIZE, 0.02)
 	Draw.make("UIAspectRatioConstraint", board, { AspectRatio = WIDTH / HEIGHT })
 	tileLayer = Draw.layer(board, 1)
 	pieceLayer = Draw.layer(board, 2)
@@ -91,49 +87,55 @@ function Board.redraw(cell, kind)
 	Draw.sprite(kind, cell)
 end
 
-function Board.drawTiles(level)
+function Board.drawTiles(rows)
 	tileLayer:ClearAllChildren()
 	pieceLayer:ClearAllChildren()
 	table.clear(pieces)
 	table.clear(laserCells)
-	for y = 1, HEIGHT do
-		for x = 1, WIDTH do
-			local key = Levels.key(x, y)
-			Board.addCell(tileLayer, if level.walls[key] then "wall" else "floor", x, y)
-			if level.lasers[key] then
-				table.insert(laserCells, Board.addCell(tileLayer, "laserOff", x, y))
+	for y, row in rows do
+		for x = 1, #row do
+			local tile = TILES[string.sub(row, x, x)]
+			if tile ~= "wall" then
+				Board.addCell(tileLayer, "floor", x, y)
+			end
+			if tile then
+				local cell = Board.addCell(tileLayer, tile, x, y)
+				if tile == "laserOff" then
+					table.insert(laserCells, cell)
+				elseif tile == "doorLocked" then
+					doorCell = cell
+				end
 			end
 		end
 	end
-	doorCell = Board.addCell(tileLayer, "doorLocked", level.exit.x, level.exit.y)
-	shown.laser, shown.open = 1, false
+	shown.laser, shown.open = "off", false
 end
 
 function Board.placePieces(state)
 	local onBoard = {}
-	local function place(id, kind, spot)
+	local function place(id, kind, spot, overlay, covered)
 		onBoard[id] = true
 		if pieces[id] then
 			Draw.tween(pieces[id], SLIDE_SECONDS, { Position = Board.cellAt(spot.x, spot.y) })
 		else
 			pieces[id] = Board.addCell(pieceLayer, kind, spot.x, spot.y)
 		end
-		return pieces[id]
+		-- A tool at work shows on the piece: haze on a blinded enemy, a veil on the cloaked thief.
+		local cover = overlay and pieces[id]:FindFirstChild(overlay)
+		if covered and not cover then
+			Draw.sprite(overlay, pieces[id])
+		elseif cover and not covered then
+			cover:Destroy()
+		end
 	end
 
 	for _, item in state.items do
 		place("item" .. item.id, item.kind, item)
 	end
 	for _, enemy in state.enemies do
-		local cell = place("enemy" .. enemy.id, enemy.kind, enemy)
-		local haze = cell:FindFirstChild("haze")
-		if state.frozen > 0 and not haze then
-			Draw.sprite("haze", cell)
-		elseif state.frozen <= 0 and haze then
-			haze:Destroy()
-		end
+		place("enemy" .. enemy.id, enemy.kind, enemy, "haze", state.active.smoke > 0)
 	end
-	place("player", "player", state.player)
+	place("player", "player", state.player, "veil", state.active.cloak > 0)
 
 	for id, cell in pieces do
 		if not onBoard[id] then
@@ -148,9 +150,8 @@ function Board.react(event)
 	if not reaction then
 		return
 	end
-	local text = reaction.text or event.text
-	if text then
-		Board.popup(text, Draw.colors[reaction.color], event.x, event.y)
+	if event.text then
+		Board.popup(event.text, Draw.colors[reaction.color], event.x, event.y)
 	end
 	if reaction.flash then
 		flashFrame.BackgroundColor3 = Draw.colors[reaction.flash]

@@ -1,5 +1,5 @@
--- Client: sends the player's intents to the server and draws whatever state the server sends back.
--- It keeps no game state of its own.
+-- Client: turns keys and buttons into intents for the server, and hands every state the server
+-- sends back to the three views. It keeps no game state and knows no rules.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,14 +10,14 @@ if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
 
-local Ui = ReplicatedStorage:WaitForChild("Ui")
-local Board = require(Ui.Board)
-local Draw = require(Ui.Draw)
-local Screens = require(Ui.Screens)
+local Board = require(StarterGui:WaitForChild("Board"))
+local Draw = require(StarterGui:WaitForChild("Draw"))
+local Hud = require(StarterGui:WaitForChild("Hud"))
+local Screens = require(StarterGui:WaitForChild("Screens"))
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
-local STAGE_ASPECT = 5 / 4
+local STAGE_ASPECT = 8 / 5
 
 local KEYS = {
 	[Enum.KeyCode.W] = "up",
@@ -29,8 +29,13 @@ local KEYS = {
 	[Enum.KeyCode.D] = "right",
 	[Enum.KeyCode.Right] = "right",
 	[Enum.KeyCode.Space] = "wait",
-	[Enum.KeyCode.F] = "smoke",
+	[Enum.KeyCode.Q] = "smoke",
+	[Enum.KeyCode.E] = "cloak",
+	[Enum.KeyCode.R] = "jammer",
+	[Enum.KeyCode.One] = "heist",
+	[Enum.KeyCode.Two] = "master",
 	[Enum.KeyCode.Return] = "start",
+	[Enum.KeyCode.M] = "menu",
 }
 
 local function sendIntent(intent) -- keys and buttons only ask; the server decides
@@ -39,6 +44,7 @@ end
 
 local function drawState(state)
 	Board.render(state)
+	Hud.render(state)
 	Screens.show(state)
 end
 
@@ -63,6 +69,7 @@ local stage = Draw.make("Frame", gui, {
 })
 Draw.make("UIAspectRatioConstraint", stage, { AspectRatio = STAGE_ASPECT })
 Board.mount(stage)
+Hud.mount(stage, sendIntent)
 Screens.mount(stage, sendIntent)
 
 Remotes.Snapshot.OnClientEvent:Connect(drawState)

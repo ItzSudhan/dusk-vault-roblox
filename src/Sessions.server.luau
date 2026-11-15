@@ -4,21 +4,28 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
-local Rules = require(ReplicatedStorage.Rules)
-local BestScore = require(script.Parent.BestScore)
+local Rules = require(ServerStorage.Rules)
+local BestScore = require(ServerStorage.BestScore)
 
 local Remotes = ReplicatedStorage.Remotes
 
+-- Everything a client may ask for. The rules live in ServerStorage, out of the client's reach.
 local INTENTS = {
 	ready = true,
+	heist = true,
+	master = true,
 	start = true,
+	menu = true,
 	up = true,
 	down = true,
 	left = true,
 	right = true,
 	wait = true,
 	smoke = true,
+	cloak = true,
+	jammer = true,
 }
 
 local sessions = {} -- [Player] = that player's run state

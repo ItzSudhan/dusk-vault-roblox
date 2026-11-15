@@ -22,6 +22,17 @@ Draw.colors = {
 	roseDark = Color3.fromRGB(150, 44, 82),
 	orange = Color3.fromRGB(255, 146, 66), -- hounds
 	violet = Color3.fromRGB(172, 124, 255), -- wraiths
+	steel = Color3.fromRGB(110, 200, 240), -- drones, pads, the jammer
+	lime = Color3.fromRGB(150, 232, 104), -- mimics
+}
+
+-- The cast: each enemy's sprite, its name and its rule in a few words, for the ledger and the title.
+Draw.CAST = {
+	{ kind = "guard", name = "GUARD", rule = "PACES HALLS" },
+	{ kind = "hound", name = "HOUND", rule = "CHASES YOU" },
+	{ kind = "wraith", name = "WRAITH", rule = "WALKS WALLS" },
+	{ kind = "drone", name = "DRONE", rule = "TURNS RIGHT" },
+	{ kind = "mimic", name = "MIMIC", rule = "MIRRORS YOU" },
 }
 Draw.titleFont = Enum.Font.FredokaOne
 Draw.textFont = Enum.Font.GothamBold
@@ -120,6 +131,51 @@ local SHAPES = {
 		{ 0.4, 0.85, 0.2, 0.12, "rose", 0.3 },
 		{ 0.36, 0.1, 0.28, 0.8, "rose", 0.5 },
 		{ 0.46, 0.1, 0.08, 0.8, "ink", 0.5 },
+	},
+	laserJammed = { -- a jammer holds it dark
+		{ 0.4, 0.03, 0.2, 0.12, "steel", 0.3 },
+		{ 0.4, 0.85, 0.2, 0.12, "steel", 0.3 },
+	},
+	drone = {
+		{ 0.06, 0.2, 0.26, 0.26, "wallTop", 0.5 }, -- rotors
+		{ 0.68, 0.2, 0.26, 0.26, "wallTop", 0.5 },
+		{ 0.14, 0.3, 0.72, 0.1, "ink", 0.5 },
+		{ 0.24, 0.3, 0.52, 0.5, "steel", 0.4 },
+		{ 0.38, 0.46, 0.24, 0.2, "night", 0.5 }, -- lens
+		{ 0.45, 0.51, 0.1, 0.1, "rose", 0.5 },
+	},
+	mimic = { -- the thief's own shape in the wrong colour
+		{ 0.2, 0.14, 0.6, 0.74, "lime", 0.35 },
+		{ 0.2, 0.3, 0.6, 0.22, "night", 0.3 },
+		{ 0.31, 0.36, 0.11, 0.11, "rose", 0.5 },
+		{ 0.58, 0.36, 0.11, 0.11, "rose", 0.5 },
+	},
+	cloak = {
+		{ 0.2, 0.12, 0.6, 0.6, "ink", 0.5 }, -- hood
+		{ 0.2, 0.42, 0.6, 0.46, "ink", 0.15 },
+		{ 0.34, 0.26, 0.32, 0.36, "night", 0.5 },
+	},
+	jammer = {
+		{ 0.46, 0.14, 0.08, 0.34, "steel", 0.3 }, -- aerial
+		{ 0.39, 0.06, 0.22, 0.16, "rose", 0.5 },
+		{ 0.2, 0.44, 0.6, 0.42, "steel", 0.2 },
+		{ 0.3, 0.56, 0.14, 0.14, "night", 0.5 },
+		{ 0.56, 0.56, 0.14, 0.14, "night", 0.5 },
+	},
+	pad = { -- one of a pair of teleport pads
+		{ 0.1, 0.1, 0.8, 0.8, "steel", 0.5 },
+		{ 0.2, 0.2, 0.6, 0.6, "floor", 0.5 },
+		{ 0.36, 0.36, 0.28, 0.28, "steel", 0.5 },
+	},
+	veil = { -- over the thief while the cloak lasts
+		{ 0.06, 0.06, 0.88, 0.88, "night", 0.5, 0, 0.4 },
+	},
+	done = { -- a vault already cleared, in the heist plan
+		{ 0.2, 0.2, 0.6, 0.6, "teal", 0.5 },
+		{ 0.38, 0.38, 0.24, 0.24, "night", 0.5 },
+	},
+	here = { -- the vault being robbed now
+		{ 0.2, 0.2, 0.6, 0.6, "amber", 0.5 },
 	},
 }
 

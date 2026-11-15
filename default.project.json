@@ -8,27 +8,6 @@
       }
     },
     "ReplicatedStorage": {
-      "Enemies": {
-        "$path": "src/Enemies.luau"
-      },
-      "Levels": {
-        "$path": "src/Levels.luau"
-      },
-      "Rules": {
-        "$path": "src/Rules.luau"
-      },
-      "Ui": {
-        "$className": "Folder",
-        "Board": {
-          "$path": "src/Board.luau"
-        },
-        "Draw": {
-          "$path": "src/Draw.luau"
-        },
-        "Screens": {
-          "$path": "src/Screens.luau"
-        }
-      },
       "Remotes": {
         "$className": "Folder",
         "Intent": {
@@ -39,19 +18,45 @@
         }
       }
     },
-    "ServerScriptService": {
+    "ServerStorage": {
       "BestScore": {
         "$path": "src/BestScore.luau"
       },
+      "Enemies": {
+        "$path": "src/Enemies.luau"
+      },
+      "Levels": {
+        "$path": "src/Levels.luau"
+      },
+      "Rules": {
+        "$path": "src/Rules.luau"
+      },
+      "Tools": {
+        "$path": "src/Tools.luau"
+      }
+    },
+    "ServerScriptService": {
       "Sessions": {
         "$path": "src/Sessions.server.luau"
       }
     },
-    "StarterPlayer": {
-      "StarterPlayerScripts": {
-        "Client": {
-          "$path": "src/Client.client.luau"
-        }
+    "ReplicatedFirst": {
+      "Client": {
+        "$path": "src/Client.client.luau"
+      }
+    },
+    "StarterGui": {
+      "Board": {
+        "$path": "src/Board.luau"
+      },
+      "Draw": {
+        "$path": "src/Draw.luau"
+      },
+      "Hud": {
+        "$path": "src/Hud.luau"
+      },
+      "Screens": {
+        "$path": "src/Screens.luau"
       }
     },
     "Workspace": {
